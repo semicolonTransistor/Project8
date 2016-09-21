@@ -8,8 +8,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
@@ -49,8 +51,10 @@ public class SerialPortInterface implements StreamInterface, ActionListener {
 		@Override
 		public void serialEvent(SerialPortEvent event) {
 			byte[] data = new byte[event.getSerialPort().bytesAvailable()];
-			event.getSerialPort().readBytes(data,data.length);
-			System.out.print(new String(data));
+			port.readBytes(data, data.length);
+			for(int index = 0; index < data.length; index++){
+				outputQueue.offer(new Byte(data[index]));
+			}
 		}
 		
 	}
@@ -59,6 +63,7 @@ public class SerialPortInterface implements StreamInterface, ActionListener {
 	protected SerialPort port;
 	protected SerialPort[] avaliablePorts;
 	protected DataListener dataListener = new DataListener();
+	protected Queue<Byte> outputQueue = new ConcurrentLinkedQueue<Byte>();
 
 	
 	
@@ -88,15 +93,13 @@ public class SerialPortInterface implements StreamInterface, ActionListener {
 	}
 
 	@Override
-	public InputStream getInputStream() {
-		// TODO Auto-generated method stub
-		return null;
+	public Byte getNextByte() {
+		return outputQueue.poll();
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
+	public void writeNextByte(byte nextByte){
 		// TODO Auto-generated method stub
-		return null;
 	}
 	
 	public SerialPortInterface() {
@@ -115,11 +118,13 @@ public class SerialPortInterface implements StreamInterface, ActionListener {
 		if(isConnected()){
 			port.removeDataListener();
 			port.closePort();
-			controlPanel.portSelector.setEnabled(true);
-			controlPanel.baudrateSelector.setEnabled(true);
-			controlPanel.stopBitsSelector.setEnabled(true);
-			controlPanel.connectButton.setEnabled(true);
-			controlPanel.disconnectButton.setEnabled(false);
+			if(!port.isOpen()){
+				controlPanel.portSelector.setEnabled(true);
+				controlPanel.baudrateSelector.setEnabled(true);
+				controlPanel.stopBitsSelector.setEnabled(true);
+				controlPanel.connectButton.setEnabled(true);
+				controlPanel.disconnectButton.setEnabled(false);
+			}
 			System.out.println(port.isOpen());
 		}
 		
@@ -131,9 +136,7 @@ public class SerialPortInterface implements StreamInterface, ActionListener {
 			System.out.println("connecting");
 			synchronized(this){
 				port = avaliablePorts[controlPanel.portSelector.getSelectedIndex()];
-				controlPanel.portSelector.setEnabled(false);
 				port.setBaudRate((Integer) controlPanel.baudrateSelector.getSelectedItem());
-				controlPanel.baudrateSelector.setEnabled(false);
 				String selectedStopBit = (String) controlPanel.stopBitsSelector.getSelectedItem();
 				if(selectedStopBit.equals("1")){
 					port.setNumDataBits(SerialPort.ONE_STOP_BIT);
@@ -142,13 +145,17 @@ public class SerialPortInterface implements StreamInterface, ActionListener {
 				}else{
 					port.setNumStopBits(SerialPort.TWO_STOP_BITS);
 				}
-				controlPanel.stopBitsSelector.setEnabled(false);
 				port.setNumDataBits((Integer)controlPanel.dataBitsSelector.getSelectedItem());
-				controlPanel.dataBitsSelector.setEnabled(false);
-				controlPanel.connectButton.setEnabled(false);
-				controlPanel.disconnectButton.setEnabled(true);
 				port.openPort();
-				port.addDataListener(dataListener);
+				if(port.isOpen()){
+					controlPanel.baudrateSelector.setEnabled(false);
+					controlPanel.portSelector.setEnabled(false);
+					controlPanel.stopBitsSelector.setEnabled(false);
+					controlPanel.dataBitsSelector.setEnabled(false);
+					controlPanel.connectButton.setEnabled(false);
+					controlPanel.disconnectButton.setEnabled(true);
+					port.addDataListener(dataListener);
+				}
 				System.out.println(port.isOpen());
 			}
 		}

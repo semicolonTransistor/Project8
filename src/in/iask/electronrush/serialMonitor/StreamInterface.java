@@ -17,9 +17,9 @@ public interface StreamInterface {
 	
 	public int bytesAvaliable();
 	
-	public InputStream getInputStream();
+	public Byte getNextByte();
 	
-	public OutputStream getOutputStream();
+	public void writeNextByte(byte nextByte);
 	
 	public void disconnect();
 	

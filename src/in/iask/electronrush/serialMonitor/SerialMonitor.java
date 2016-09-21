@@ -7,11 +7,9 @@ import java.awt.GridLayout;
 
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
-import com.fazecast.jSerialComm.*;
 
 import in.iask.electronrush.serialMonitor.StreamInterfaces.SerialPortInterface.SerialPortInterface;
 
-import javax.swing.JSeparator;
 import javax.swing.JTabbedPane;
 import java.awt.GridBagLayout;
 import javax.swing.JTextField;
@@ -20,11 +18,40 @@ import javax.swing.JButton;
 import java.awt.Insets;
 import javax.swing.JEditorPane;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.awt.event.ActionEvent;;
 
 public class SerialMonitor {
+	
+	public class IncommingMessageHandler extends Thread{
+		protected AtomicBoolean run = new AtomicBoolean(true);
+		
+		@Override
+		public void run(){
+			while(run.get()){
+				Byte thisByte = streamInterface.getNextByte();
+				if(thisByte != null){
+					displaydata.offer(thisByte);
+					Byte[] dataObj = displaydata.toArray(new Byte[1]);
+					byte[] data = new byte[dataObj.length];
+					for(int index = 0; index < dataObj.length; index++){
+						data[index] = dataObj[index].byteValue();
+					}
+					editor.setText(new String(data));
+				}
+			}
+		}
+		
+		public void end(){
+			run.set(false);
+		}
+	}
 
 	private JFrame frame;
+	protected JEditorPane editor;
+	
+	protected ConcurrentLinkedQueue<Byte> displaydata = new ConcurrentLinkedQueue<Byte>();
 
 	/**
 	 * Launch the application.
@@ -52,6 +79,7 @@ public class SerialMonitor {
 	public SerialMonitor() {
 		streamInterface = new SerialPortInterface();
 		initialize();
+		new IncommingMessageHandler().start();
 		
 	}
 
@@ -103,14 +131,14 @@ public class SerialMonitor {
 		gbc_btnNewButton.gridy = 0;
 		basicAscii.add(btnNewButton, gbc_btnNewButton);
 		
-		JEditorPane editorPane = new JEditorPane();
+		editor = new JEditorPane();
 		GridBagConstraints gbc_editorPane = new GridBagConstraints();
 		gbc_editorPane.gridwidth = 2;
 		gbc_editorPane.insets = new Insets(0, 0, 5, 0);
 		gbc_editorPane.fill = GridBagConstraints.BOTH;
 		gbc_editorPane.gridx = 0;
 		gbc_editorPane.gridy = 1;
-		basicAscii.add(editorPane, gbc_editorPane);
+		basicAscii.add(editor, gbc_editorPane);
 		
 		JButton btnClear = new JButton("Clear");
 		GridBagConstraints gbc_btnClear = new GridBagConstraints();
