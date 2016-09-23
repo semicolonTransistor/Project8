@@ -3,11 +3,8 @@ package in.iask.electronrush.serialMonitor.StreamInterfaces.SerialPortInterface;
 import javax.swing.JPanel;
 import javax.swing.DefaultComboBoxModel;
 
-import java.awt.Event;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -31,7 +28,11 @@ public class SerialPortInterface implements StreamInterface, ActionListener {
 					for(int index = 0; index < avaliablePorts.length; index++){
 						portLables[index] = avaliablePorts[index].getDescriptivePortName();
 					}
+					int selectedIndex = controlPanel.portSelector.getSelectedIndex();
 					controlPanel.portSelector.setModel(new DefaultComboBoxModel<String>(portLables));
+					if(controlPanel.portSelector.getItemCount() >= selectedIndex){
+						controlPanel.portSelector.setSelectedIndex(selectedIndex);
+					}
 				}else{
 					byte[] data = "TEST\n".getBytes();
 					port.writeBytes(data, data.length);

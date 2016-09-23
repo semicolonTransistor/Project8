@@ -18,33 +18,27 @@ import javax.swing.JButton;
 import java.awt.Insets;
 import javax.swing.JEditorPane;
 import java.awt.event.ActionListener;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.awt.event.ActionEvent;;
 
 public class SerialMonitor {
 	
-	public class IncommingMessageHandler extends Thread{
-		protected AtomicBoolean run = new AtomicBoolean(true);
+	public class IncommingMessageHandler extends TimerTask{
 		
 		@Override
 		public void run(){
-			while(run.get()){
-				Byte thisByte = streamInterface.getNextByte();
-				if(thisByte != null){
-					displaydata.offer(thisByte);
-					Byte[] dataObj = displaydata.toArray(new Byte[1]);
-					byte[] data = new byte[dataObj.length];
-					for(int index = 0; index < dataObj.length; index++){
-						data[index] = dataObj[index].byteValue();
-					}
-					editor.setText(new String(data));
+			Byte thisByte;
+			while((thisByte = streamInterface.getNextByte())!=null){
+				displaydata.offer(thisByte);
+				Byte[] dataObj = displaydata.toArray(new Byte[1]);
+				byte[] data = new byte[dataObj.length];
+				for(int index = 0; index < dataObj.length; index++){
+					data[index] = dataObj[index].byteValue();
 				}
+				editor.setText(new String(data));
 			}
-		}
-		
-		public void end(){
-			run.set(false);
 		}
 	}
 
@@ -52,6 +46,7 @@ public class SerialMonitor {
 	protected JEditorPane editor;
 	
 	protected ConcurrentLinkedQueue<Byte> displaydata = new ConcurrentLinkedQueue<Byte>();
+	protected Timer screenUpdateTimer = new Timer();
 
 	/**
 	 * Launch the application.
@@ -79,7 +74,7 @@ public class SerialMonitor {
 	public SerialMonitor() {
 		streamInterface = new SerialPortInterface();
 		initialize();
-		new IncommingMessageHandler().start();
+		screenUpdateTimer.schedule(new IncommingMessageHandler(), 0, 20);
 		
 	}
 

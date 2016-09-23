@@ -86,8 +86,8 @@ public class ControlPanel extends JPanel {
 		gbc_lblParity.gridy = 2;
 		add(lblParity, gbc_lblParity);
 		
-		paritySelector = new JComboBox();
-		paritySelector.setModel(new DefaultComboBoxModel(new String[] {"odd", "even"}));
+		paritySelector = new JComboBox<String>();
+		paritySelector.setModel(new DefaultComboBoxModel<String>(new String[] {"odd", "even"}));
 		GridBagConstraints gbc_paritySelector = new GridBagConstraints();
 		gbc_paritySelector.insets = new Insets(0, 0, 5, 0);
 		gbc_paritySelector.fill = GridBagConstraints.HORIZONTAL;
@@ -103,8 +103,8 @@ public class ControlPanel extends JPanel {
 		gbc_lblStopBits.gridy = 3;
 		add(lblStopBits, gbc_lblStopBits);
 		
-		stopBitsSelector = new JComboBox();
-		stopBitsSelector.setModel(new DefaultComboBoxModel(new String[] {"1", "2"}));
+		stopBitsSelector = new JComboBox<String>();
+		stopBitsSelector.setModel(new DefaultComboBoxModel<String>(new String[] {"1", "2"}));
 		GridBagConstraints gbc_stopBitsSelector = new GridBagConstraints();
 		gbc_stopBitsSelector.insets = new Insets(0, 0, 5, 0);
 		gbc_stopBitsSelector.fill = GridBagConstraints.HORIZONTAL;
